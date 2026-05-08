@@ -1,3 +1,14 @@
-venv/
 __pycache__/
-.ipynb_checkpoints/
+*.py[cod]
+*$py.class
+.env
+.venv/
+venv/
+ENV/
+env/
+data/uploads/*
+!data/uploads/.gitkeep
+data/index/*
+!data/index/.gitkeep
+.idea/
+.vscode/
