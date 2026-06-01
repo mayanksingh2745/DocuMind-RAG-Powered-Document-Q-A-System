@@ -42,12 +42,17 @@ async def upload_document(file: UploadFile = File(...)):
 @router.post("/query")
 async def query_document(request: QueryRequest):
     """
-    Query the indexed documents. Returns a streaming response.
+    Query the indexed documents. Returns a streaming response in standard Server-Sent Events (SSE) format.
     """
     if not rag_engine.vectorstore:
         raise HTTPException(status_code=400, detail="No documents indexed. Please upload a document first.")
         
     return StreamingResponse(
         rag_engine.astream_answer(request.question), 
-        media_type="text/event-stream"
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
     )

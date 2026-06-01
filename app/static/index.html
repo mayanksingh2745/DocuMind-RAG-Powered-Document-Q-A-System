@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuMind — AI-Powered PDF Chatbot</title>
+    
+    <!-- Meta tags for premium SEO -->
+    <meta name="description" content="DocuMind is an AI-powered system designed to process, index, and query PDF documents using Retrieval-Augmented Generation (RAG).">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-base: #0a0e17;
+            --bg-card: rgba(15, 23, 42, 0.7);
+            --border-glow: rgba(99, 102, 241, 0.15);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            
+            --primary: #6366f1;       /* Electric Indigo */
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #a855f7;     /* Cyber Purple */
+            --accent: #14b8a6;        /* Neon Teal */
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dark: #0f172a;
+            
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Glowing background blur blobs */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+        }
+
+        /* All-in-one App Wrapper */
+        #app-wrapper {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 14, 23, 0.5);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--border-glass);
+        }
+
+        /* ==================== LEFT SIDEBAR ==================== */
+        sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-glass);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px var(--primary-glow);
+            color: white;
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Drag & Drop Zone */
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(99, 102, 241, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.08);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .drop-zone input {
+            display: none;
+        }
+
+        .drop-zone-icon {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            transition: transform var(--transition-speed);
+        }
+
+        .drop-zone:hover .drop-zone-icon {
+            transform: translateY(-4px) scale(1.1);
+        }
+
+        .drop-zone p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .drop-zone p strong {
+            color: var(--text-main);
+        }
+
+        /* Upload Status Indicator */
+        .upload-status {
+            display: none;
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.50rem;
+        }
+
+        .status-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 700;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar-fill.loading {
+            width: 85%;
+            animation: pulse-width 3s infinite alternate;
+        }
+
+        .status-info {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Document list area */
+        .doc-list-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            transition: all var(--transition-speed);
+        }
+
+        .doc-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateX(2px);
+        }
+
+        .doc-item-icon {
+            color: #ef4444; /* PDF Red */
+        }
+
+        .doc-item-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            overflow: hidden;
+        }
+
+        .doc-item-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .doc-item-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .no-docs {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border: 1px dashed var(--border-glass);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+
+        /* ==================== MAIN CHAT CONSOLE ==================== */
+        main {
+            display: grid;
+            grid-template-rows: 80px 1fr auto;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.3) 0%, rgba(9, 13, 22, 0.8) 100%);
+        }
+
+        /* Top Header */
+        header {
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .header-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .header-status {
+            font-size: 0.75rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            max-width: 80%;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .avatar.user {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .avatar.bot {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .bubble {
+            padding: 0.95rem 1.25rem;
+            border-radius: 16px;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .message.user .bubble {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-top-right-radius: 4px;
+            color: var(--text-main);
+        }
+
+        .message.bot .bubble {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-top-left-radius: 4px;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Streaming Indicator Cursor */
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background-color: var(--primary);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 0.8s infinite;
+        }
+
+        /* Collapsible Citations Drawer */
+        .citations-section {
+            border-top: 1px solid var(--border-glass);
+            padding-top: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .citations-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: color var(--transition-speed);
+        }
+
+        .citations-header:hover {
+            color: var(--primary);
+        }
+
+        .citations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            margin-top: 0.75rem;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .citation-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            transition: all var(--transition-speed);
+        }
+
+        .citation-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(99, 102, 241, 0.02);
+        }
+
+        .citation-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .citation-card-badge {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            padding: 0.1rem 0.4rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+        }
+
+        .citation-card-text {
+            color: var(--text-muted);
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        /* Suggestion Prompts */
+        .suggestions-container {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .suggestion-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            color: var(--text-muted);
+            padding: 0.6rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            font-weight: 500;
+        }
+
+        .suggestion-btn:hover {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.4);
+            color: var(--text-main);
+            transform: translateY(-1px);
+        }
+
+        /* Bottom Input Console */
+        .input-console {
+            padding: 0 2rem 2rem 2rem;
+            position: relative;
+        }
+
+        .input-box-wrapper {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            transition: all var(--transition-speed);
+        }
+
+        .input-box-wrapper:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-family: inherit;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.95rem;
+            resize: none;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            box-shadow: 0 0 10px var(--primary-glow);
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+        }
+
+        .send-btn:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+
+        /* ==================== ANIMATIONS ==================== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pulse-width {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="app-wrapper">
+        
+        <!-- SIDEBAR -->
+        <sidebar>
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i data-lucide="brain-circuit" style="width: 24px; height: 24px;"></i>
+                </div>
+                <div class="logo-text">DocuMind</div>
+            </div>
+
+            <!-- Drag & Drop Uploader -->
+            <div class="upload-container">
+                <div class="section-title">Upload Context</div>
+                <label class="drop-zone" id="drop-zone">
+                    <i data-lucide="cloud-upload" class="drop-zone-icon" style="width: 38px; height: 38px;"></i>
+                    <p><strong>Click to upload</strong> or drag & drop</p>
+                    <p>Supports PDF documents</p>
+                    <input type="file" id="file-input" accept="application/pdf">
+                </label>
+
+                <!-- Processing status -->
+                <div class="upload-status" id="upload-status">
+                    <div class="status-header">
+                        <span class="status-title" id="status-title">Uploading...</span>
+                        <span class="status-badge" id="status-badge">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                    </div>
+                    <div class="status-info" id="status-info">
+                        <i data-lucide="loader-2" class="spinner" style="width: 14px; height: 14px;"></i>
+                        <span>Parsing pages...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indexed Documents List -->
+            <div class="doc-list-container">
+                <div class="section-title">Indexed Files</div>
+                <div id="docs-list">
+                    <div class="no-docs" id="no-docs-message">
+                        <i data-lucide="folder-open" style="width: 28px; height: 28px;"></i>
+                        <span>No files indexed yet.</span>
+                    </div>
+                </div>
+            </div>
+        </sidebar>
+
+        <!-- MAIN CONSOLE -->
+        <main>
+            <!-- Header bar -->
+            <header>
+                <div class="header-info">
+                    <div class="header-title">Hybrid Q&A Chatroom</div>
+                    <div class="header-status">
+                        <div class="status-dot"></div>
+                        <span id="rag-status-text">Ready to ingest documents</span>
+                    </div>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.50rem;">
+                    <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--accent);"></i>
+                    <span>RAG Anchored</span>
+                </div>
+            </header>
+
+            <!-- Conversation Panel -->
+            <div class="chat-panel" id="chat-panel">
+                <!-- Welcome Bot message -->
+                <div class="message bot">
+                    <div class="avatar bot">
+                        <i data-lucide="bot" style="width: 18px; height: 18px;"></i>
+                    </div>
+                    <div class="bubble">
+                        Hello! I am DocuMind, your RAG-anchored intelligent document companion. 
+                        <br><br>
+                        To begin, please drag and drop or upload a PDF document on the left. Once parsed, you can ask me any citation-backed questions!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompts -->
+            <div class="suggestions-container" id="suggestions-container" style="display: none;">
+                <button class="suggestion-btn" onclick="sendSuggested('Summarize the key points of the uploaded document.')">Summarize PDF</button>
+                <button class="suggestion-btn" onclick="sendSuggested('What are the core conclusions or findings?')">Core Findings</button>
+                <button class="suggestion-btn" onclick="sendSuggested('Are there any notable references or timelines mentioned?')">Key Timelines</button>
+            </div>
+
+            <!-- Input area -->
+            <div class="input-console">
+                <div class="input-box-wrapper">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Ask a question about your documents..." disabled>
+                    <button class="send-btn" id="send-btn" disabled>
+                        <i data-lucide="send-horizontal" style="width: 18px; height: 18px;"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MAIN LOGIC -->
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadStatus = document.getElementById('upload-status');
+        const statusTitle = document.getElementById('status-title');
+        const statusBadge = document.getElementById('status-badge');
+        const progressFill = document.getElementById('progress-bar-fill');
+        const statusInfo = document.getElementById('status-info');
+        const docsList = document.getElementById('docs-list');
+        const noDocsMessage = document.getElementById('no-docs-message');
+        
+        const chatPanel = document.getElementById('chat-panel');
+        const suggestionsContainer = document.getElementById('suggestions-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const ragStatusText = document.getElementById('rag-status-text');
+
+        let isChatActive = false;
+        let isUploading = false;
+        const uploadedFiles = [];
+
+        // Setup Drag & Drop Handlers
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        // Document Uploader Logic
+        async function handleFileUpload(file) {
+            if (isUploading) return;
+            if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+                alert('Only PDF documents are supported at this time.');
+                return;
+            }
+
+            isUploading = true;
+            uploadStatus.style.display = 'block';
+            statusTitle.textContent = 'Uploading...';
+            statusBadge.textContent = '10%';
+            progressFill.style.width = '10%';
+            progressFill.classList.remove('loading');
+            
+            // Setup visual details
+            statusInfo.innerHTML = `
+                <i data-lucide="loader-2" class="spinner" style="width: 14px; height: 14px;"></i>
+                <span>Transferring file to server...</span>
+            `;
+            lucide.createIcons();
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // Simulate progressive loading bar before server ingest returns
+                let progress = 10;
+                const interval = setInterval(() => {
+                    if (progress < 80) {
+                        progress += 10;
+                        statusBadge.textContent = `${progress}%`;
+                        progressFill.style.width = `${progress}%`;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 400);
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(interval);
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Upload failed');
+                }
+
+                const result = await response.json();
+                
+                // Show completion
+                statusTitle.textContent = 'Indexing Complete!';
+                statusBadge.textContent = '100%';
+                progressFill.style.width = '100%';
+                statusInfo.innerHTML = `
+                    <i data-lucide="check-circle" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                    <span style="color: var(--accent);">Successfully indexed!</span>
+                `;
+                lucide.createIcons();
+
+                // Add to sidebar files
+                addFileToSidebar(file.name, result.message);
+                
+                // Enable chat console
+                enableChat();
+                
+            } catch (error) {
+                console.error(error);
+                statusTitle.textContent = 'Ingestion Failed';
+                statusBadge.textContent = 'ERR';
+                progressFill.style.width = '100%';
+                progressFill.style.background = '#ef4444';
+                statusInfo.innerHTML = `
+                    <i data-lucide="alert-circle" style="width: 14px; height: 14px; color: #ef4444;"></i>
+                    <span style="color: #ef4444;">${error.message}</span>
+                `;
+                lucide.createIcons();
+            } finally {
+                isUploading = false;
+            }
+        }
+
+        function addFileToSidebar(name, message) {
+            uploadedFiles.push(name);
+            noDocsMessage.style.display = 'none';
+            
+            const docElement = document.createElement('div');
+            docElement.className = 'doc-item';
+            docElement.innerHTML = `
+                <i data-lucide="file-text" class="doc-item-icon" style="width: 24px; height: 24px;"></i>
+                <div class="doc-item-details">
+                    <div class="doc-item-name" title="${name}">${name}</div>
+                    <div class="doc-item-meta">Active Context</div>
+                </div>
+            `;
+            docsList.appendChild(docElement);
+            lucide.createIcons();
+        }
+
+        function enableChat() {
+            chatInput.disabled = false;
+            sendBtn.disabled = false;
+            chatInput.placeholder = "Ask something about your indexed documents...";
+            ragStatusText.textContent = "Context indexed. System active!";
+            suggestionsContainer.style.display = 'flex';
+        }
+
+
+        // ==================== CHATBOT LOGIC ====================
+        sendBtn.addEventListener('click', triggerMessageSend);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                triggerMessageSend();
+            }
+        });
+
+        function sendSuggested(prompt) {
+            chatInput.value = prompt;
+            triggerMessageSend();
+        }
+
+        async function triggerMessageSend() {
+            const query = chatInput.value.trim();
+            if (!query || isChatActive) return;
+
+            isChatActive = true;
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // 1. Add User Message
+            addMessage(query, 'user');
+
+            // 2. Add empty bot bubble with loader/spinner
+            const botMessageContainer = addMessage('', 'bot', true);
+            const bubbleNode = botMessageContainer.querySelector('.bubble');
+
+            try {
+                // Stream response using Fetch Reader (SSE manual parsing)
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: query })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Internal server retrieval issue.');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let done = false;
+                let buffer = '';
+                let answerText = '';
+                let citationsData = null;
+
+                // Create text span and typing cursor inside bubble
+                const textSpan = document.createElement('span');
+                const cursor = document.createElement('span');
+                cursor.className = 'typing-cursor';
+                
+                bubbleNode.innerHTML = '';
+                bubbleNode.appendChild(textSpan);
+                bubbleNode.appendChild(cursor);
+
+                while (!done) {
+                    const { value, done: readerDone } = await reader.read();
+                    done = readerDone;
+                    if (value) {
+                        buffer += decoder.decode(value, { stream: !done });
+                        const lines = buffer.split('\n');
+                        
+                        // Keep last line in buffer if incomplete
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (trimmed.startsWith('data: ')) {
+                                try {
+                                    const rawJson = trimmed.slice(6);
+                                    const parsed = JSON.parse(rawJson);
+                                    
+                                    if (parsed.type === 'token') {
+                                        answerText += parsed.content;
+                                        // Render and replace newlines with line breaks
+                                        textSpan.innerHTML = answerText.replace(/\n/g, '<br>');
+                                        chatPanel.scrollTop = chatPanel.scrollHeight;
+                                    } else if (parsed.type === 'citations') {
+                                        citationsData = parsed.data;
+                                    } else if (parsed.type === 'error') {
+                                        throw new Error(parsed.message);
+                                    } else if (parsed.type === 'done') {
+                                        done = true;
+                                    }
+                                } catch (jsonErr) {
+                                    // Handle malformed JSON chunks gracefully
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Remove typing cursor when done
+                cursor.remove();
+
+                // 3. Render Citations if present
+                if (citationsData && citationsData.length > 0) {
+                    const citationsDiv = document.createElement('div');
+                    citationsDiv.className = 'citations-section';
+                    
+                    const uniqueId = `cite-${Date.now()}`;
+                    
+                    citationsDiv.innerHTML = `
+                        <div class="citations-header" onclick="toggleCitations('${uniqueId}')">
+                            <span style="display:flex; align-items:center; gap:0.4rem;">
+                                <i data-lucide="bookmark-check" style="width:14px; height:14px;"></i>
+                                Verified Sources (${citationsData.length})
+                            </span>
+                            <i data-lucide="chevron-down" id="arrow-${uniqueId}" style="width:14px; height:14px; transition: transform var(--transition-speed);"></i>
+                        </div>
+                        <div class="citations-list" id="${uniqueId}" style="display: none;">
+                            ${citationsData.map(c => `
+                                <div class="citation-card">
+                                    <div class="citation-card-header">
+                                        <span>[${c.index}] ${c.source}</span>
+                                        <span class="citation-card-badge">Page ${c.page}</span>
+                                    </div>
+                                    <div class="citation-card-text">"${c.content}"</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    bubbleNode.appendChild(citationsDiv);
+                    lucide.createIcons();
+                }
+
+            } catch (err) {
+                console.error(err);
+                bubbleNode.innerHTML = `<span style="color:#ef4444;"><i data-lucide="alert-circle" style="display:inline; width:16px; height:16px; margin-right:4px; vertical-align:middle;"></i>Error: ${err.message}</span>`;
+                lucide.createIcons();
+            } finally {
+                isChatActive = false;
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
+                chatInput.focus();
+                chatPanel.scrollTop = chatPanel.scrollHeight;
+            }
+        }
+
+        function addMessage(text, sender, isLoading = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const avatarHtml = sender === 'user' 
+                ? `<div class="avatar user"><i data-lucide="user" style="width: 18px; height: 18px;"></i></div>`
+                : `<div class="avatar bot"><i data-lucide="bot" style="width: 18px; height: 18px;"></i></div>`;
+
+            const bubbleContent = isLoading 
+                ? `<i data-lucide="loader-2" class="spinner" style="width: 18px; height: 18px;"></i>` 
+                : text.replace(/\n/g, '<br>');
+
+            messageDiv.innerHTML = `
+                ${avatarHtml}
+                <div class="bubble">${bubbleContent}</div>
+            `;
+
+            chatPanel.appendChild(messageDiv);
+            lucide.createIcons();
+            chatPanel.scrollTop = chatPanel.scrollHeight;
+            return messageDiv;
+        }
+
+        function toggleCitations(id) {
+            const el = document.getElementById(id);
+            const arrow = document.getElementById(`arrow-${id}`);
+            if (el.style.display === 'none') {
+                el.style.display = 'flex';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                el.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+            chatPanel.scrollTop = chatPanel.scrollHeight;
+        }
+    </script>
+</body>
+</html>
